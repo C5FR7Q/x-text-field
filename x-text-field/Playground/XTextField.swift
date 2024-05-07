@@ -26,6 +26,7 @@ struct XTextField: View {
     var onTrailingImageClick: () -> Void = { }
     
     var body: some View {
+        let _ = Self._printChanges()
         VStack(alignment: .leading, spacing: 0) {
             let shouldUseLabel = true // Изменим после
             Text(label)
@@ -73,6 +74,7 @@ struct XTextField: View {
         }
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1 : 0.4)
+        .background(.random)
     }
     
     @ViewBuilder
@@ -130,4 +132,14 @@ private extension XTextField {
     var textFont: Font { Font.body }
     
     var captionFont: Font { Font.caption }
+}
+
+private extension ShapeStyle where Self == Color {
+    static var random: Color {
+        Color(
+            red: .random(in: 0...1),
+            green: .random(in: 0...1),
+            blue: .random(in: 0...1)
+        )
+    }
 }
