@@ -42,6 +42,7 @@ struct XTextField: View {
                         .foregroundColor(placeholderColor)
                         .opacity(shouldUseLabel ? 0 : 1)
                     textField()
+                        .textFieldStyle(.plain) // https://stackoverflow.com/a/74745555
                         .font(textFont)
                         .foregroundColor(textColor)
                         .accentColor(cursorColor)
