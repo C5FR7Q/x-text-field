@@ -25,10 +25,13 @@ struct XTextField: View {
     
     var onTrailingImageClick: () -> Void = { }
     
+    @FocusState
+    var isFocused: Bool
+    
     var body: some View {
         let _ = Self._printChanges()
         VStack(alignment: .leading, spacing: 0) {
-            let shouldUseLabel = true // Изменим после
+            let shouldUseLabel = isFocused || !text.isEmpty
             Text(label)
                 .font(labelFont)
                 .foregroundColor(labelColor)
@@ -62,7 +65,7 @@ struct XTextField: View {
                 Spacer()
                 Rectangle()
                     .fill(underlineColor)
-                    .frame(height: 1)
+                    .frame(height: isFocused ? 2 : 1)
             }.frame(height: 16, alignment: .bottom)
             
             if let captionText = captionText {
@@ -71,6 +74,10 @@ struct XTextField: View {
                     .font(captionFont)
                     .foregroundColor(captionColor)
             }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            isFocused = true
         }
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1 : 0.4)
@@ -83,6 +90,7 @@ struct XTextField: View {
             get: { text },
             set: { onTextChange($0) }
         ))
+            .focused($isFocused)
     }
 }
 
@@ -107,7 +115,11 @@ private extension XTextField {
         if hasError {
             Color.red
         } else {
-            Color.gray
+            if isFocused {
+                Color.black
+            } else {
+                Color.gray
+            }
         }
     }
     
