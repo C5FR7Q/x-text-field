@@ -13,6 +13,7 @@ struct XTextField: View {
     
     var isEnabled: Bool = true
     var hasError: Bool = false
+    var isSecureTextEntry: Bool = false
     
     var label: String = ""
     var placeholder: String = ""
@@ -26,7 +27,7 @@ struct XTextField: View {
     var onTrailingImageClick: () -> Void = { }
     
     @FocusState
-    var isFocused: Bool
+    var focusField: FocusField?
     
     var body: some View {
         let _ = Self._printChanges()
@@ -77,20 +78,39 @@ struct XTextField: View {
         }
         .contentShape(Rectangle())
         .onTapGesture {
-            isFocused = true
+            focusField = isSecureTextEntry ? .secureField : .textField
         }
         .disabled(!isEnabled)
         .opacity(isEnabled ? 1 : 0.4)
+        .onChange(of: isSecureTextEntry) { newIsSecureTextEntry in
+            if focusField != nil {
+                focusField = newIsSecureTextEntry ? .secureField : .textField
+            }
+        }
         .background(.random)
     }
     
     @ViewBuilder
     private func textField() -> some View {
-        TextField("", text: Binding(
-            get: { text },
-            set: { onTextChange($0) }
-        ))
-            .focused($isFocused)
+        ZStack {
+            TextField("", text: Binding(
+                get: { text },
+                set: { onTextChange($0) }
+            ))
+                .focused($focusField, equals: .textField)
+                .opacity(isSecureTextEntry ? 0 : 1)
+            
+            SecureField("", text: Binding(
+                get: { text },
+                set: { onTextChange($0) }
+            ))
+                .focused($focusField, equals: .secureField)
+                .opacity(isSecureTextEntry ? 1 : 0)
+        }
+    }
+    
+    var isFocused: Bool {
+        focusField != nil
     }
 }
 
@@ -144,6 +164,33 @@ private extension XTextField {
     var textFont: Font { Font.body }
     
     var captionFont: Font { Font.caption }
+}
+
+extension XTextField {
+    
+    enum FocusField {
+        case textField, secureField
+    }
+}
+
+extension View {
+    
+    @ViewBuilder
+    public func preventPasswordReset() -> some View {
+        onReceive(
+            NotificationCenter.default.publisher(
+                for: UITextField.textDidBeginEditingNotification
+            )
+        ) { obj in
+            if let textField = obj.object as? UITextField {
+                if textField.isSecureTextEntry {
+                    let currentText = textField.text ?? ""
+                    textField.text = ""
+                    textField.insertText(currentText)
+                }
+            }
+        }
+    }
 }
 
 private extension ShapeStyle where Self == Color {

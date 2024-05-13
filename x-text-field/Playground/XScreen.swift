@@ -26,16 +26,21 @@ struct XScreen: View {
     
     @StateObject private var text1Object: XObject<String>
     @StateObject private var text2Object: XObject<String>
+    @StateObject private var text1SecureObject: XObject<Bool>
     
     private var onText1Change: (String) -> Void
     private var onText2Change: (String) -> Void
     
+    private var onTrailing1IconClick: () -> Void
+    
     init() {
         var text1Obj = XObject(value: "TextField1")
         var text2Obj = XObject(value: "TextField2")
+        var text1SecureObj = XObject(value: false)
         
         self._text1Object = StateObject(wrappedValue: text1Obj)
         self._text2Object = StateObject(wrappedValue: text2Obj)
+        self._text1SecureObject = StateObject(wrappedValue: text1SecureObj)
         
         self.onText1Change = { text in
             text1Obj.update(text)
@@ -45,6 +50,9 @@ struct XScreen: View {
             text2Obj.update(text)
             print("TextField2: text changed to \(text)")
         }
+        self.onTrailing1IconClick = {
+            text1SecureObj.update(!text1SecureObj.value)
+        }
     }
     
     var body: some View {
@@ -52,11 +60,13 @@ struct XScreen: View {
             XTextField(
                 text: text1Object.value,
                 hasError: false,
+                isSecureTextEntry: text1SecureObject.value,
                 label: "TextField1",
                 placeholder: "TextField1",
                 trailingImage: UIImage.add.withRenderingMode(.alwaysTemplate),
                 captionText: "TextField1",
-                onTextChange: onText1Change
+                onTextChange: onText1Change,
+                onTrailingImageClick: onTrailing1IconClick
             ).padding(20)
             
             XTextField(
@@ -69,5 +79,6 @@ struct XScreen: View {
                 onTextChange: onText2Change
             ).padding(20)
         }
+        .preventPasswordReset()
     }
 }
