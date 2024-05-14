@@ -10,6 +10,7 @@ import SwiftUI
 struct XTextField: View {
     
     var text: String
+    var currentText: (() -> String)? = nil
     
     var isEnabled: Bool = true
     var hasError: Bool = false
@@ -28,11 +29,40 @@ struct XTextField: View {
     
     @FocusState
     var focusField: FocusField?
+    @State
+    private var internalText: String
+    
+    init(
+        text: String,
+        currentText: (() -> String)? = nil,
+        isEnabled: Bool = true,
+        hasError: Bool = false,
+        isSecureTextEntry: Bool = false,
+        label: String = "",
+        placeholder: String = "",
+        trailingImage: UIImage? = nil,
+        captionText: String? = nil,
+        onTextChange: @escaping (String) -> Void,
+        onTrailingImageClick: @escaping () -> Void = { }
+    ) {
+        self.text = text
+        self.currentText = currentText
+        self.isEnabled = isEnabled
+        self.hasError = hasError
+        self.isSecureTextEntry = isSecureTextEntry
+        self.label = label
+        self.placeholder = placeholder
+        self.trailingImage = trailingImage
+        self.captionText = captionText
+        self.onTextChange = onTextChange
+        self.onTrailingImageClick = onTrailingImageClick
+        self._internalText = State(wrappedValue: text)
+    }
     
     var body: some View {
         let _ = Self._printChanges()
         VStack(alignment: .leading, spacing: 0) {
-            let shouldUseLabel = isFocused || !text.isEmpty
+            let shouldUseLabel = isFocused || !internalText.isEmpty
             Text(label)
                 .font(labelFont)
                 .foregroundColor(labelColor)
@@ -87,23 +117,28 @@ struct XTextField: View {
                 focusField = newIsSecureTextEntry ? .secureField : .textField
             }
         }
+        .onChange(of: internalText) { newText in
+            if newText != text {
+                onTextChange(newText)
+                if let currentText = currentText {
+                    internalText = currentText()
+                }
+            }
+        }
+        .onChange(of: text) { newText in
+            internalText = newText
+        }
         .background(.random)
     }
     
     @ViewBuilder
     private func textField() -> some View {
         ZStack {
-            TextField("", text: Binding(
-                get: { text },
-                set: { onTextChange($0) }
-            ))
+            TextField("", text: $internalText)
                 .focused($focusField, equals: .textField)
                 .opacity(isSecureTextEntry ? 0 : 1)
             
-            SecureField("", text: Binding(
-                get: { text },
-                set: { onTextChange($0) }
-            ))
+            SecureField("", text: $internalText)
                 .focused($focusField, equals: .secureField)
                 .opacity(isSecureTextEntry ? 1 : 0)
         }

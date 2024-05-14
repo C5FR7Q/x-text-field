@@ -33,6 +33,8 @@ struct XScreen: View {
     
     private var onTrailing1IconClick: () -> Void
     
+    private var text2CurrentText: () -> String
+    
     init() {
         var text1Obj = XObject(value: "TextField1")
         var text2Obj = XObject(value: "TextField2")
@@ -47,12 +49,21 @@ struct XScreen: View {
             print("TextField1: text changed to \(text)")
         }
         self.onText2Change = { text in
-            text2Obj.update(text)
-            print("TextField2: text changed to \(text)")
+            let numbers = text
+                .filter { $0.isNumber }
+                .prefix(4)
+            let charArray = Array(numbers)
+            let formattedText = charArray
+                .map { String($0) }
+                .joined(separator: "-")
+            text2Obj.update(formattedText)
+            print("TextField2: text changed to \(formattedText)")
         }
         self.onTrailing1IconClick = {
             text1SecureObj.update(!text1SecureObj.value)
         }
+        
+        self.text2CurrentText = { text2Obj.value }
     }
     
     var body: some View {
@@ -71,6 +82,7 @@ struct XScreen: View {
             
             XTextField(
                 text: text2Object.value,
+                currentText: text2CurrentText,
                 hasError: true,
                 label: "TextField2",
                 placeholder: "TextField2",
